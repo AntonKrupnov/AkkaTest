@@ -12,8 +12,6 @@ import anton.krupnov.akka.messages.ProcessLine;
 import anton.krupnov.akka.messages.ReadFile;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -38,7 +36,7 @@ public class FileParser extends UntypedActor {
   public void onReceive(Object o) throws Exception {
     if (o instanceof ReadFile) {
       ReadFile readFile = (ReadFile) o;
-      System.out.println("FileParser. Parse file: " + readFile.getInputStream());
+      System.out.println("FileParser. Start parsing file: " + readFile.getInputStream());
       parseFile(readFile.getInputStream());
     } else {
       unhandled(o);
@@ -55,6 +53,10 @@ public class FileParser extends UntypedActor {
       line = bufferedReader.readLine();
     }
 
+    sendFinishParsingMessage(i);
+  }
+
+  private void sendFinishParsingMessage(int i) {
     Props props = Props.create(Aggregator.class);
     ActorRef aggregator = context().actorOf(props);
     aggregator.tell(new Finish(Finish.FinishType.FILE, i), self());

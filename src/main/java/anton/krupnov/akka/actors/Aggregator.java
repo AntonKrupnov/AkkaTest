@@ -26,7 +26,7 @@ public class Aggregator extends UntypedActor {
 
   public static ActorRef getAggregator() {
     if (AGGREGATOR == null) {
-      throw new IllegalArgumentException();
+      throw new IllegalStateException();
     }
     return AGGREGATOR;
   }
@@ -35,18 +35,25 @@ public class Aggregator extends UntypedActor {
   public void onReceive(Object o) throws Exception {
     if (o instanceof IdAmount) {
       IdAmount idAmount = (IdAmount) o;
-      System.out.println("Aggregator. For id: " + idAmount.getId() + " add amount: " + idAmount.getAmount());
-      process(idAmount.getId(), idAmount.getAmount());
+      addAmount(idAmount.getId(), idAmount.getAmount());
     } else if (o instanceof Finish) {
       Finish finish = (Finish) o;
-      addFinishInfo(finish);
+      finishMessage(finish);
     } else {
       unhandled(o);
     }
   }
 
-  private void addFinishInfo(Finish finish) {
-    System.out.println("Finish info: " + finish.getFinishType() + "-" + finish.getNumberOf());
+  private void addAmount(int id, double amount) {
+    Double value = ID_AMOUNT.get(id);
+    if (value == null) {
+      value = 0.0;
+    }
+    value += amount;
+    ID_AMOUNT.put(id, value);
+  }
+
+  private void finishMessage(Finish finish) {
     switch (finish.getFinishType()) {
       case FILE:
         expectedNumberOfLines = finish.getNumberOf();
@@ -59,8 +66,6 @@ public class Aggregator extends UntypedActor {
     if (expectedNumberOfLines >= 0 && expectedNumberOfLines == actualNumberOfLines) {
       printFinalResultsAndExit();
     }
-
-    System.out.println("Finish results: " + expectedNumberOfLines + "=" + actualNumberOfLines);
   }
 
   private void printFinalResultsAndExit() {
@@ -69,15 +74,6 @@ public class Aggregator extends UntypedActor {
       System.out.println("ID: " + entry.getKey() + ", total value: " + entry.getValue());
     }
     System.exit(0);
-  }
-
-  private void process(int id, double amount) {
-    Double value = ID_AMOUNT.get(id);
-    if (value == null) {
-      value = 0.0;
-    }
-    value += amount;
-    ID_AMOUNT.put(id, value);
   }
 
 }

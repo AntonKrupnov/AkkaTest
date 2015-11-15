@@ -19,13 +19,27 @@ public class LineProcessor extends UntypedActor {
   }
 
   private void processLine(String line) {
+    String[] idAmountStrings = splitLinesToIdAmountStrings(line);
+    for (String idAmountString : idAmountStrings) {
+      IdAmount idAmount = convertToMessage(idAmountString);
+      Aggregator.getAggregator().tell(idAmount, self());
+    }
+    Aggregator.getAggregator().tell(new Finish(Finish.FinishType.LINE, idAmountStrings.length), self());
+  }
+
+  private IdAmount convertToMessage(String idAmountString) {
+    String[] split = idAmountString.split(";");
+    if (split.length != 2) {
+      throw new IllegalStateException("Can not parse string: " + idAmountString);
+    }
+    Integer id = Integer.valueOf(split[0]);
+    Double amount = Double.valueOf(split[1]);
+    return new IdAmount(id, amount);
+  }
+
+  private String[] splitLinesToIdAmountStrings(String line) {
     // cut off first symbol " and last symbols " and ;
     line = line.substring(1, line.length() - 2);
-    String[] strings = line.split("\";\"");
-    for (String string : strings) {
-      String[] split = string.split(";");
-      Aggregator.getAggregator().tell(new IdAmount(Integer.valueOf(split[0]), Double.valueOf(split[1])), self());
-    }
-    Aggregator.getAggregator().tell(new Finish(Finish.FinishType.LINE, strings.length), self());
+    return line.split("\";\"");
   }
 }
