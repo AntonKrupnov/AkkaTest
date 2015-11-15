@@ -1,17 +1,17 @@
 package anton.krupnov.akka.messages;
 
-import java.io.File;
+import java.io.InputStream;
 
 public class ReadFile {
 
-  private File file;
+  private InputStream inputStream;
 
   public ReadFile(String filePath) {
-    file = new File(filePath);
+    inputStream = this.getClass().getClassLoader().getResourceAsStream(filePath);
   }
 
-  public File getFile() {
-    return file;
+  public InputStream getInputStream() {
+    return inputStream;
   }
 
 }
